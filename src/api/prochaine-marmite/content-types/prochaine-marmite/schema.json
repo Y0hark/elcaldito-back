@@ -1,0 +1,65 @@
+{
+  "kind": "collectionType",
+  "collectionName": "prochaine_marmites",
+  "info": {
+    "singularName": "prochaine-marmite",
+    "pluralName": "prochaine-marmites",
+    "displayName": "prochaine-marmite"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "date": {
+      "type": "datetime"
+    },
+    "disponibilite": {
+      "type": "integer",
+      "min": 0,
+      "required": true
+    },
+    "prix": {
+      "type": "decimal",
+      "min": 0,
+      "required": true
+    },
+    "description": {
+      "type": "blocks",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "image": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "commandes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::commande.commande",
+      "mappedBy": "event"
+    }
+  }
+}

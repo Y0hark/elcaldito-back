@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "commandes",
+  "info": {
+    "singularName": "commande",
+    "pluralName": "commandes",
+    "displayName": "commande"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "commentaire": {
+      "type": "text"
+    },
+    "state": {
+      "type": "enumeration",
+      "enum": [
+        "En cours",
+        "Annulé",
+        "Livré"
+      ]
+    },
+    "livraison": {
+      "type": "boolean"
+    },
+    "event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::prochaine-marmite.prochaine-marmite",
+      "inversedBy": "commandes"
+    },
+    "quantite": {
+      "type": "integer",
+      "required": true,
+      "min": 1
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "commandes"
+    }
+  }
+}
