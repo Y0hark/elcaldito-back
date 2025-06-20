@@ -382,7 +382,7 @@ export interface ApiActuActu extends Struct.CollectionTypeSchema {
     singularName: 'actu';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   pluginOptions: {
     i18n: {
@@ -521,14 +521,18 @@ export interface ApiAuteurAuteur extends Struct.CollectionTypeSchema {
 export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
   collectionName: 'commandes';
   info: {
+    description: '';
     displayName: 'commande';
     pluralName: 'commandes';
     singularName: 'commande';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
+    cancelled: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<false>;
     commentaire: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -554,7 +558,7 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
         number
       >;
     state: Schema.Attribute.Enumeration<
-      ['En cours', 'Annul\u00E9', 'Livr\u00E9']
+      ['Annul\u00E9e', 'Livr\u00E9e', 'Valid\u00E9e']
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -575,7 +579,7 @@ export interface ApiCommentaireCommentaire extends Struct.CollectionTypeSchema {
     singularName: 'commentaire';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   pluginOptions: {
     i18n: {
@@ -616,12 +620,13 @@ export interface ApiProchaineMarmiteProchaineMarmite
   extends Struct.CollectionTypeSchema {
   collectionName: 'prochaine_marmites';
   info: {
+    description: '';
     displayName: 'prochaine-marmite';
     pluralName: 'prochaine-marmites';
     singularName: 'prochaine-marmite';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   pluginOptions: {
     i18n: {
@@ -649,12 +654,24 @@ export interface ApiProchaineMarmiteProchaineMarmite
         },
         number
       >;
+    disponible: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
     image: Schema.Attribute.Media<'images' | 'files' | 'videos'>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::prochaine-marmite.prochaine-marmite'
     >;
+    portions_totales: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<15>;
     prix: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<

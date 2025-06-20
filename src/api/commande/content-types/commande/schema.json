@@ -4,10 +4,11 @@
   "info": {
     "singularName": "commande",
     "pluralName": "commandes",
-    "displayName": "commande"
+    "displayName": "commande",
+    "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -17,9 +18,9 @@
     "state": {
       "type": "enumeration",
       "enum": [
-        "En cours",
-        "Annulé",
-        "Livré"
+        "Annulée",
+        "Livrée",
+        "Validée"
       ]
     },
     "livraison": {
@@ -41,6 +42,11 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "commandes"
+    },
+    "cancelled": {
+      "type": "boolean",
+      "default": false,
+      "required": true
     }
   }
 }
