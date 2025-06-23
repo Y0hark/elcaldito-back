@@ -8,7 +8,7 @@ export default factories.createCoreController('api::commande.commande', ({ strap
   async create(ctx) {
     const user = ctx.state.user;
     if (!user) {
-      return ctx.unauthorized('You must be logged in to create a commande');
+      return ctx.unauthorized('You must be logged in to create une commande');
     }
     // On retire le champ user du body s'il existe
     if (ctx.request.body.data.user) {
@@ -24,19 +24,16 @@ export default factories.createCoreController('api::commande.commande', ({ strap
     }
     // Création de la commande sans user
     const response = await super.create(ctx);
-    strapi.log.info('Résultat super.create(ctx): ' + JSON.stringify(response));
-    // Récupération de l'id selon le format de retour
     const commandeId = response?.data?.id || response?.id;
     if (!commandeId) {
-      strapi.log.error('Impossible de récupérer l\'id de la commande après création.');
       return response;
     }
-    // Mise à jour native pour lier le user
+    // Liaison du user à la commande (update natif)
     await strapi.db.query('api::commande.commande').update({
       where: { id: commandeId },
       data: { user: user.id }
     });
-    // On retourne la commande mise à jour
+    // Retourne la commande mise à jour avec le user lié
     const updatedCommande = await strapi.entityService.findOne('api::commande.commande', commandeId, { populate: ['user'] });
     return { data: updatedCommande };
   },
