@@ -20,7 +20,8 @@
       "enum": [
         "Annulée",
         "Livrée",
-        "Validée"
+        "Validée",
+        "En attente"
       ]
     },
     "livraison": {

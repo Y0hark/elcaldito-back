@@ -558,7 +558,7 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
         number
       >;
     state: Schema.Attribute.Enumeration<
-      ['Annul\u00E9e', 'Livr\u00E9e', 'Valid\u00E9e']
+      ['Annul\u00E9e', 'Livr\u00E9e', 'Valid\u00E9e', 'En attente']
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

@@ -14,7 +14,11 @@ export default factories.createCoreService('api::commande.commande');
 export async function validateCommande(event: any): Promise<void> {
   const { data, where } = event.params;
 
-  if (!data.quantite || data.quantite <= 0) {
+  strapi.log.info('validateCommande data: ' + JSON.stringify(data));
+  strapi.log.info('validateCommande data.quantite: ' + JSON.stringify(data.quantite));
+
+  // Ne valide la quantité que si elle est présente dans data
+  if ('quantite' in data && (data.quantite === undefined || data.quantite <= 0)) {
     throw new ApplicationError("La quantité doit être un entier positif.");
   }
 
