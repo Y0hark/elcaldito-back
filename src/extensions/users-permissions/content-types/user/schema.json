@@ -76,6 +76,12 @@
       "relation": "oneToMany",
       "target": "api::commentaire.commentaire",
       "mappedBy": "author"
+    },
+    "userInfo": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::user-info.user-info",
+      "mappedBy": "user"
     }
   }
 }

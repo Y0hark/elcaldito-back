@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_infos",
+  "info": {
+    "singularName": "user-info",
+    "pluralName": "user-infos",
+    "displayName": "user-info"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "phone": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "text"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "userInfo"
+    }
+  }
+}

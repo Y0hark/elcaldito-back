@@ -48,6 +48,33 @@
       "type": "boolean",
       "default": false,
       "required": true
+    },
+    "paymentMethod": {
+      "type": "enumeration",
+      "enum": [
+        "liquide",
+        "stripe"
+      ],
+      "required": true,
+      "default": "liquide"
+    },
+    "paymentIntent": {
+      "type": "text",
+      "description": "ID du Payment Intent Stripe"
+    },
+    "amount": {
+      "type": "decimal",
+      "description": "Montant total en euros"
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "succeeded",
+        "failed",
+        "canceled"
+      ],
+      "default": "pending"
     }
   }
 }

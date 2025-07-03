@@ -19,10 +19,18 @@ export async function validateCommande(event: any): Promise<void> {
     throw new ApplicationError("La quantité doit être un entier positif.");
   }
 
+  // Skip validation for certain fields that don't affect availability
+  const skipValidationFields = ['paymentStatus', 'paymentIntent', 'amount', 'commentaire'];
+  const hasOnlySkipFields = Object.keys(data).every(key => skipValidationFields.includes(key));
+  if (hasOnlySkipFields) {
+    return;
+  }
+
   await strapi.db.transaction(async (trx) => {
     // Gestion des différents formats d'event
     let marmiteId: number | undefined;
     const rawEvent = data.event;
+    
     if (typeof rawEvent === 'string') {
       const marmite = await strapi.db.query('api::prochaine-marmite.prochaine-marmite').findOne({
         where: { documentId: rawEvent },
@@ -47,6 +55,9 @@ export async function validateCommande(event: any): Promise<void> {
         throw new ApplicationError("Commande à mettre à jour introuvable.");
       }
       marmiteId = commandeExistante.event;
+    } else if (rawEvent === undefined && !where) {
+      // Skip validation if no event is provided and this is an update
+      return;
     } else {
       throw new ApplicationError("Format de l'événement non reconnu.");
     }
@@ -62,10 +73,10 @@ export async function validateCommande(event: any): Promise<void> {
       throw new ApplicationError(`Marmite avec l'ID ${marmiteId} introuvable.`);
     }
 
-    // Cas spécial : si on passe la commande à Annulé, on ne vérifie pas la dispo
-    if (data.state === 'Annulé' && where) {
+    // Cas spécial : si on passe la commande à Annulée, on ne vérifie pas la dispo
+    if (data.state === 'Annulée' && where) {
       const commandeExistante = await strapi.db.query('api::commande.commande').findOne({ where });
-      if (commandeExistante && commandeExistante.state !== 'Annulé') {
+      if (commandeExistante && commandeExistante.state !== 'Annulée') {
         return;
       }
     }

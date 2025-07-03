@@ -530,6 +530,7 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    amount: Schema.Attribute.Decimal;
     cancelled: Schema.Attribute.Boolean &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<false>;
@@ -548,6 +549,14 @@ export interface ApiCommandeCommande extends Struct.CollectionTypeSchema {
       'api::commande.commande'
     > &
       Schema.Attribute.Private;
+    paymentIntent: Schema.Attribute.Text;
+    paymentMethod: Schema.Attribute.Enumeration<['liquide', 'stripe']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'liquide'>;
+    paymentStatus: Schema.Attribute.Enumeration<
+      ['pending', 'succeeded', 'failed', 'canceled']
+    > &
+      Schema.Attribute.DefaultTo<'pending'>;
     publishedAt: Schema.Attribute.DateTime;
     quantite: Schema.Attribute.Integer &
       Schema.Attribute.Required &
@@ -691,6 +700,39 @@ export interface ApiProchaineMarmiteProchaineMarmite
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiUserInfoUserInfo extends Struct.CollectionTypeSchema {
+  collectionName: 'user_infos';
+  info: {
+    displayName: 'user-info';
+    pluralName: 'user-infos';
+    singularName: 'user-info';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    address: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::user-info.user-info'
+    > &
+      Schema.Attribute.Private;
+    phone: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -1188,6 +1230,7 @@ export interface PluginUsersPermissionsUser
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    userInfo: Schema.Attribute.Relation<'oneToOne', 'api::user-info.user-info'>;
     username: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique &
@@ -1213,6 +1256,7 @@ declare module '@strapi/strapi' {
       'api::commande.commande': ApiCommandeCommande;
       'api::commentaire.commentaire': ApiCommentaireCommentaire;
       'api::prochaine-marmite.prochaine-marmite': ApiProchaineMarmiteProchaineMarmite;
+      'api::user-info.user-info': ApiUserInfoUserInfo;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;
