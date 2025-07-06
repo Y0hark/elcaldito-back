@@ -625,6 +625,37 @@ export interface ApiCommentaireCommentaire extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
+  collectionName: 'messages';
+  info: {
+    displayName: 'message';
+    pluralName: 'messages';
+    singularName: 'message';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Schema.Attribute.Blocks & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    email: Schema.Attribute.Email & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::message.message'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    sujet: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiProchaineMarmiteProchaineMarmite
   extends Struct.CollectionTypeSchema {
   collectionName: 'prochaine_marmites';
@@ -1255,6 +1286,7 @@ declare module '@strapi/strapi' {
       'api::auteur.auteur': ApiAuteurAuteur;
       'api::commande.commande': ApiCommandeCommande;
       'api::commentaire.commentaire': ApiCommentaireCommentaire;
+      'api::message.message': ApiMessageMessage;
       'api::prochaine-marmite.prochaine-marmite': ApiProchaineMarmiteProchaineMarmite;
       'api::user-info.user-info': ApiUserInfoUserInfo;
       'plugin::content-releases.release': PluginContentReleasesRelease;
