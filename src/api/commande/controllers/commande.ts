@@ -16,7 +16,7 @@ export default factories.createCoreController('api::commande.commande', ({ strap
   };
   
   // Log pour debug
-  console.log('Configuration Stripe chargée:', {
+  Logger.info('Configuration Stripe chargée', {
     hasSecretKey: !!stripeConfig.stripeSecretKey,
     hasWebhookSecret: !!stripeConfig.webhookSecret,
     webhookSecretLength: stripeConfig.webhookSecret?.length || 0
@@ -110,7 +110,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
         };
         
         // Log pour debug
-        console.log('finalCommandeData:', finalCommandeData);
+        Logger.info('Données finales de commande', {
+          ...finalCommandeData,
+          userId: user.id
+        });
         
         // Création de la commande avec le user
         const response = await strapi.entityService.create('api::commande.commande', {
@@ -118,17 +121,18 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           populate: ['user']
         });
         
-        console.log('Commande créée en attente de paiement:', {
+        Logger.success('Commande créée en attente de paiement', {
           commandeId: response.id,
           stripePaymentIntentId,
           amount: paymentIntent.amount / 100,
-          status: 'pending'
+          status: 'pending',
+          userId: user.id
         });
 
         // Vérifier immédiatement le statut du paiement avec Stripe
         try {
           const currentPaymentIntent = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
-          console.log('🔍 Statut actuel du Payment Intent:', {
+          Logger.info('Statut actuel du Payment Intent', {
             paymentIntentId: stripePaymentIntentId,
             status: currentPaymentIntent.status
           });
@@ -144,22 +148,30 @@ export default factories.createCoreController('api::commande.commande', ({ strap
               populate: ['user']
             });
 
-            console.log('✅ Commande mise à jour avec paiement confirmé:', {
+            Logger.success('Commande mise à jour avec paiement confirmé', {
               commandeId: response.id,
               paymentStatus: 'succeeded',
-              state: 'Validée'
+              state: 'Validée',
+              userId: user.id
             });
 
             return { data: updatedCommande };
           }
         } catch (syncError) {
-          console.error('⚠️ Erreur lors de la vérification du statut:', syncError);
+          Logger.warning('Erreur lors de la vérification du statut', {
+            error: syncError.message,
+            paymentIntentId: stripePaymentIntentId,
+            userId: user.id
+          });
           // On continue avec la commande en statut pending
         }
         
         return { data: response };
       } catch (error) {
-        console.error('Erreur lors de la création de la commande avec paiement:', error);
+        Logger.error('Erreur lors de la création de la commande avec paiement', error as Error, {
+          userId: user.id,
+          stripePaymentIntentId
+        });
         return ctx.badRequest('Erreur lors de la création de la commande');
       }
     },
@@ -201,7 +213,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
 
         return { data: updatedCommande };
       } catch (error) {
-        console.error('Erreur lors de la mise à jour:', error);
+        Logger.error('Erreur lors de la mise à jour', error as Error, {
+          commandeId,
+          userId: user.id
+        });
         return ctx.badRequest('Erreur lors de la mise à jour de la commande');
       }
     },
@@ -248,6 +263,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
 
     async updatePaymentStatus(ctx) {
       const { commandeId, paymentIntentId, paymentStatus } = ctx.request.body;
+      const user = ctx.state.user;
+
+      if (!user) {
+        return ctx.unauthorized('You must be logged in to update payment status');
+      }
 
       if (!commandeId || !paymentIntentId) {
         return ctx.badRequest('Commande ID et Payment Intent ID requis');
@@ -272,12 +292,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           populate: ['user']
         });
 
-        console.log('Commande mise à jour:', {
+        Logger.success('Commande mise à jour', {
           commandeId,
-          paymentIntentId,
-          amount: paymentIntent.amount / 100,
-          status: finalStatus,
-          state: updatedCommande.state
+          paymentStatus: finalStatus,
+          state: updatedCommande.state,
+          userId: user.id
         });
 
         return { 
@@ -290,7 +309,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
             : 'Paiement échoué - commande annulée'
         };
       } catch (error) {
-        console.error('Erreur lors de la mise à jour du statut:', error);
+        Logger.error('Erreur lors de la mise à jour du statut', error as Error, {
+          commandeId,
+          paymentIntentId,
+          userId: user.id
+        });
         
         // Si l'erreur vient de Stripe, essayer de mettre à jour juste la commande
         if (error.type === 'StripeError') {
@@ -302,6 +325,13 @@ export default factories.createCoreController('api::commande.commande', ({ strap
               }
             });
             
+            Logger.warning('Paiement échoué - commande annulée', {
+              commandeId,
+              paymentStatus: 'failed',
+              state: 'Annulée',
+              userId: user.id
+            });
+            
             return {
               success: false,
               status: 'failed',
@@ -309,7 +339,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
               message: 'Paiement échoué - commande annulée'
             };
           } catch (dbError) {
-            console.error('Erreur lors de la mise à jour de la commande:', dbError);
+            Logger.error('Erreur lors de la mise à jour de la commande', dbError as Error, {
+              commandeId,
+              userId: user.id
+            });
           }
         }
         
@@ -349,10 +382,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           populate: ['user']
         });
 
-        console.log('Commande annulée:', {
+        Logger.success('Commande annulée', {
           commandeId,
-          userId: user.id,
-          state: updatedCommande.state
+          paymentStatus: 'canceled',
+          state: 'Annulée',
+          userId: user.id
         });
 
         return { 
@@ -361,7 +395,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           message: 'Commande annulée avec succès'
         };
       } catch (error) {
-        console.error('Erreur lors de l\'annulation de la commande:', error);
+        Logger.error('Erreur lors de l\'annulation de la commande', error as Error, {
+          commandeId,
+          userId: user.id
+        });
         return ctx.badRequest('Erreur lors de l\'annulation de la commande');
       }
     },
@@ -392,9 +429,9 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           deletedCount++;
         }
 
-        console.log('Commandes orphelines supprimées:', {
-          userId: user.id,
-          deletedCount
+        Logger.success('Commandes orphelines supprimées', {
+          count: deletedCount,
+          userId: user.id
         });
 
         return {
@@ -403,8 +440,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           message: `${deletedCount} commande(s) orpheline(s) supprimée(s)`
         };
       } catch (error) {
-        console.error('Erreur lors du nettoyage des commandes orphelines:', error);
-        return ctx.badRequest('Erreur lors du nettoyage des commandes');
+        Logger.error('Erreur lors du nettoyage des commandes orphelines', error as Error, {
+          userId: user.id
+        });
+        return ctx.badRequest('Erreur lors du nettoyage des commandes orphelines');
       }
     },
 
@@ -697,7 +736,9 @@ export default factories.createCoreController('api::commande.commande', ({ strap
     },
 
     async handlePaymentFailed(paymentIntent) {
-      console.log('Paiement échoué:', paymentIntent.id);
+      Logger.error('Paiement échoué', undefined, {
+        paymentIntentId: paymentIntent.id
+      });
       
       const commande = await strapi.entityService.findMany('api::commande.commande', {
         filters: {
@@ -716,7 +757,7 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           }
         });
 
-        console.log('Commande marquée comme échouée:', {
+        Logger.warning('Commande marquée comme échouée', {
           commandeId: commandeToUpdate.id,
           paymentIntentId: paymentIntent.id,
           status: 'failed'
@@ -725,7 +766,9 @@ export default factories.createCoreController('api::commande.commande', ({ strap
     },
 
     async handlePaymentCanceled(paymentIntent) {
-      console.log('Paiement annulé:', paymentIntent.id);
+      Logger.warning('Paiement annulé', {
+        paymentIntentId: paymentIntent.id
+      });
       
       const commande = await strapi.entityService.findMany('api::commande.commande', {
         filters: {
@@ -740,12 +783,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
         await strapi.entityService.update('api::commande.commande', commandeToUpdate.id, {
           data: {
             paymentStatus: 'canceled',
-            state: 'Annulée',
-            cancelled: true
+            state: 'Annulée'
           }
         });
 
-        console.log('Commande annulée:', {
+        Logger.success('Commande annulée', {
           commandeId: commandeToUpdate.id,
           paymentIntentId: paymentIntent.id,
           status: 'canceled'
@@ -782,7 +824,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           paymentIntent: commande.paymentIntent
         };
       } catch (error) {
-        console.error('Erreur lors de la vérification du statut:', error);
+        Logger.error('Erreur lors de la vérification du statut', error as Error, {
+          paymentIntentId: commandeId,
+          userId: user.id
+        });
         return ctx.badRequest('Erreur lors de la vérification du statut');
       }
     },
@@ -815,10 +860,12 @@ export default factories.createCoreController('api::commande.commande', ({ strap
         // Vérifier le statut du Payment Intent avec Stripe
         const paymentIntent = await stripe.paymentIntents.retrieve(commande.paymentIntent);
         
-        console.log('🔍 Statut Stripe pour Payment Intent:', {
+        Logger.info('Statut Stripe pour Payment Intent', {
           paymentIntentId: commande.paymentIntent,
           stripeStatus: paymentIntent.status,
-          currentStatus: commande.paymentStatus
+          amount: paymentIntent.amount / 100,
+          currency: paymentIntent.currency,
+          userId: user.id
         });
 
         // Mettre à jour le statut selon Stripe
@@ -856,13 +903,11 @@ export default factories.createCoreController('api::commande.commande', ({ strap
             populate: ['user']
           });
 
-          console.log('✅ Statut de paiement synchronisé:', {
+          Logger.success('Statut de paiement synchronisé', {
             commandeId,
-            paymentIntentId: commande.paymentIntent,
-            ancienStatus: commande.paymentStatus,
-            nouveauStatus: newPaymentStatus,
-            ancienState: commande.state,
-            nouveauState: newState
+            paymentStatus: newPaymentStatus,
+            state: updatedCommande.state,
+            userId: user.id
           });
 
           return {
@@ -878,7 +923,10 @@ export default factories.createCoreController('api::commande.commande', ({ strap
           };
         }
       } catch (error) {
-        console.error('Erreur lors de la synchronisation du statut:', error);
+        Logger.error('Erreur lors de la synchronisation du statut', error as Error, {
+          commandeId,
+          userId: user.id
+        });
         return ctx.badRequest('Erreur lors de la synchronisation du statut de paiement');
       }
     },

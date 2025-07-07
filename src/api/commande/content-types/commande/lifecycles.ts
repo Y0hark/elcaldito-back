@@ -1,4 +1,5 @@
 import { validateCommande } from '../../services/commande';
+import { Logger } from '../../../../utils/logger';
 
 function isEventChanged(dataEvent, existingEvent) {
   // Si dataEvent est un objet { connect: [], disconnect: [] } et les deux arrays sont vides, ce n'est pas un changement
@@ -25,7 +26,11 @@ export default {
     const keys = Object.keys(data);
 
     // Log pour debug
-    console.log('[ADMIN UPDATE] Champs modifiés:', keys, 'Valeurs:', data);
+    Logger.info('Admin update - Champs modifiés', {
+      keys,
+      values: data,
+      commandeId: event.params.where?.id
+    });
 
     // Récupère la commande existante pour comparer les valeurs
     const id = event.params.where?.id;

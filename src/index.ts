@@ -1,4 +1,6 @@
 import type { Core } from '@strapi/strapi';
+import { Logger } from './utils/logger';
+import { loggingManager } from './config/logging';
 
 export default {
   /**
@@ -7,7 +9,10 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register(/* { strapi }: { strapi: Core.Strapi } */) {
+    // Initialiser le système de logging
+    loggingManager;
+  },
 
   /**
    * An asynchronous bootstrap function that runs before
@@ -18,6 +23,9 @@ export default {
    */
   bootstrap({ strapi }: { strapi: Core.Strapi }) {
     // Les routes sont maintenant définies dans src/api/commande/routes/commande.ts
-    console.log('🚀 Serveur Strapi démarré avec les routes de commande configurées');
+    Logger.success('Serveur Strapi démarré avec les routes de commande configurées', {
+      environment: process.env.NODE_ENV,
+      version: process.env.npm_package_version || 'unknown'
+    });
   },
 };

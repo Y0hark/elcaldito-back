@@ -1,15 +1,19 @@
 import { Context, Next } from 'koa';
+import { Logger } from '../utils/logger';
 
 export default (config, { strapi }) => {
   return async (ctx: Context, next: Next) => {
     // Vérifier si c'est la route du webhook Stripe
     if (ctx.path === '/api/commandes/stripe-webhook' && ctx.method === 'POST') {
-      console.log('🔧 MIDDLEWARE WEBHOOK - Route détectée');
+      Logger.info('Middleware webhook - Route détectée', {
+        path: ctx.path,
+        method: ctx.method
+      });
       
       // En mode développement, on peut ignorer la lecture du raw body
       // car on utilise le body parsé par Strapi
       if (process.env.NODE_ENV === 'development') {
-        console.log('🛠️ Mode développement : raw body ignoré');
+        Logger.info('Mode développement : raw body ignoré');
         (ctx.request as any).rawBody = null;
       } else {
         // En production, essayer de lire le raw body avec un timeout court
@@ -36,9 +40,9 @@ export default (config, { strapi }) => {
           });
           
           (ctx.request as any).rawBody = rawBody;
-          console.log('✅ Raw body lu avec succès');
+          Logger.success('Raw body lu avec succès');
         } catch (error) {
-          console.error('❌ Erreur dans le middleware webhook:', error);
+          Logger.error('Erreur dans le middleware webhook', error as Error);
           (ctx.request as any).rawBody = null;
         }
       }
