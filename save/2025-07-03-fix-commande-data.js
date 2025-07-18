@@ -18,9 +18,14 @@ async function up(knex) {
     
     console.log('✅ Table commandes existe');
     
-    // Vérifier les colonnes existantes
-    const columns = await knex.raw("PRAGMA table_info(commandes)");
-    const columnNames = columns.map(col => col.name);
+    // Vérifier les colonnes existantes (méthode compatible PostgreSQL)
+    const columns = await knex.raw(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'commandes' 
+      AND table_schema = 'public'
+    `);
+    const columnNames = columns.rows.map(col => col.column_name);
     
     console.log('📋 Colonnes existantes:', columnNames);
     
@@ -29,16 +34,16 @@ async function up(knex) {
       const commandesWithoutStatus = await knex.raw(`
         SELECT COUNT(*) as count 
         FROM commandes 
-        WHERE paymentStatus IS NULL OR paymentStatus = ''
+        WHERE "paymentStatus" IS NULL OR "paymentStatus" = ''
       `);
       
-      if (commandesWithoutStatus[0].count > 0) {
-        console.log(`🔄 Mise à jour de ${commandesWithoutStatus[0].count} commandes sans paymentStatus...`);
+      if (commandesWithoutStatus.rows[0].count > 0) {
+        console.log(`🔄 Mise à jour de ${commandesWithoutStatus.rows[0].count} commandes sans paymentStatus...`);
         
         await knex.raw(`
           UPDATE commandes 
-          SET paymentStatus = 'pending' 
-          WHERE paymentStatus IS NULL OR paymentStatus = ''
+          SET "paymentStatus" = 'pending' 
+          WHERE "paymentStatus" IS NULL OR "paymentStatus" = ''
         `);
         
         console.log('✅ Commandes mises à jour avec paymentStatus par défaut');
@@ -57,12 +62,12 @@ async function up(knex) {
         WHERE updated_at IS NULL
       `);
       
-      if (commandesWithoutUpdatedAt[0].count > 0) {
-        console.log(`🔄 Mise à jour de ${commandesWithoutUpdatedAt[0].count} commandes sans updated_at...`);
+      if (commandesWithoutUpdatedAt.rows[0].count > 0) {
+        console.log(`🔄 Mise à jour de ${commandesWithoutUpdatedAt.rows[0].count} commandes sans updated_at...`);
         
         await knex.raw(`
           UPDATE commandes 
-          SET updated_at = datetime('now') 
+          SET updated_at = NOW() 
           WHERE updated_at IS NULL
         `);
         
@@ -76,7 +81,7 @@ async function up(knex) {
     
     // Compter le nombre total de commandes
     const totalCommandes = await knex.raw('SELECT COUNT(*) as count FROM commandes');
-    console.log(`📊 Nombre total de commandes: ${totalCommandes[0].count}`);
+    console.log(`📊 Nombre total de commandes: ${totalCommandes.rows[0].count}`);
     
     console.log('✅ Correction des données terminée');
     

@@ -17,8 +17,9 @@
   "dependencies": {
     "@strapi/plugin-cloud": "5.13.1",
     "@strapi/plugin-users-permissions": "5.13.1",
+    "@strapi/provider-upload-cloudinary": "^5.18.1",
     "@strapi/strapi": "5.13.1",
-    "better-sqlite3": "11.3.0",
+    "pg": "^8.11.3",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.10.9",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "typescript": "^5"
