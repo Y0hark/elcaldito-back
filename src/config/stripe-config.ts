@@ -15,7 +15,7 @@ export const STRIPE_CONFIG: StripeConfig = {
   supportedCurrencies: ['eur', 'usd', 'gbp'],
   webhookTimeout: 2000, // 2 secondes
   retryAttempts: 3,
-  defaultPaymentMethods: ['card', 'bancontact', 'eps', 'giropay', 'klarna', 'link']
+  defaultPaymentMethods: ['card']
 };
 
 export class StripeConfigManager {
